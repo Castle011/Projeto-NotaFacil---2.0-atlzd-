@@ -47,8 +47,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices }) => {
     <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <h3 className="text-xl font-semibold">{t('invoiceList.title')}</h3>
-        <div className="flex items-center space-x-4">
-          <div className="flex space-x-2">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap gap-2">
               {filters.map(f => (
                    <button
                    key={f.id}
