@@ -159,6 +159,7 @@ export const translations: Record<string, any> = {
       inputPlaceholder: 'Digite sua mensagem...',
       errorMessage: 'Desculpe, ocorreu um erro. Tente novamente mais tarde.',
       apiKeyMissing: 'A chave da API não está configurada. O chatbot está desativado.',
+      newChat: 'Novo Chat',
     },
     common: {
       client: 'Cliente',
@@ -336,6 +337,7 @@ export const translations: Record<string, any> = {
       inputPlaceholder: 'Type your message...',
       errorMessage: 'Sorry, an error occurred. Please try again later.',
       apiKeyMissing: 'API Key is not configured. Chatbot is disabled.',
+      newChat: 'New Chat',
     },
     common: {
       client: 'Client',

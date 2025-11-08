@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { useTranslations } from '../context/LanguageContext';
+import { Invoice, InvoiceStatus, Message } from '../types';
 
-interface Message {
-  role: 'user' | 'model';
-  text: string;
+interface ChatbotProps {
+  invoices: Invoice[];
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 const apiKey = "AIzaSyA-99JUXLSc2vJ0CnkmMDt2bj6beYuxoBI";
 
-const Chatbot: React.FC = () => {
+const Chatbot: React.FC<ChatbotProps> = ({ invoices, messages, setMessages }) => {
   const { t } = useTranslations();
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,20 +21,33 @@ const Chatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!apiKey) {
-      console.warn("API_KEY not found. Chatbot will be disabled.");
-      setError(t('chatbot.apiKeyMissing'));
-      return;
+    // A new chat session is started when the message list is empty.
+    const isNewChat = messages.length === 0;
+
+    if (isNewChat) {
+      setError(null); // Clear previous errors on new chat
+      if (!apiKey) {
+        console.warn("API_KEY not found. Chatbot will be disabled.");
+        setError(t('chatbot.apiKeyMissing'));
+        setMessages([{ role: 'model', text: t('chatbot.apiKeyMissing') }]);
+        return;
+      }
+      
+      const ai = new GoogleGenAI({ apiKey });
+      chatRef.current = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+          systemInstruction: `You are a helpful assistant for an invoice management app called NotaFácil.
+Your purpose is to help users understand their invoice data.
+Use the context provided about the user's invoices to answer their questions.
+Refer to clients by their names, and mention specific invoice amounts and statuses.
+Be concise, friendly, and professional.
+The application is available in Portuguese (pt) and English (en), respond in the user's language.`,
+        },
+      });
+      setMessages([{ role: 'model', text: t('chatbot.welcomeMessage') }]);
     }
-    const ai = new GoogleGenAI({ apiKey });
-    chatRef.current = ai.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: 'You are a helpful assistant for an invoice management app called NotaFácil. Be concise and friendly.',
-      },
-    });
-    setMessages([{ role: 'model', text: t('chatbot.welcomeMessage') }]);
-  }, [t]);
+  }, [messages, setMessages, t]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -50,17 +64,37 @@ const Chatbot: React.FC = () => {
     setError(null);
 
     try {
-      const responseStream = await chatRef.current.sendMessageStream({ message: input });
+      // Create a detailed summary of invoice data.
+      const clientNames = [...new Set(invoices.map(inv => inv.clientName))].join(', ') || 'nenhum cliente';
       
-      // FIX: The user-provided error line number was likely incorrect. The type error originated from
-      // inferring `role` as `string`. By creating the object inline, TypeScript correctly infers
-      // 'model' as a literal type, which is assignable to the `Message['role']` type.
+      const pendingInvoices = invoices.filter(inv => inv.status === InvoiceStatus.Pendente);
+      const pendingSummary = pendingInvoices.length > 0
+        ? pendingInvoices.map(inv => `${inv.clientName} (R$ ${inv.amount.toFixed(2)})`).join(', ')
+        : 'nenhuma';
+        
+      const overdueInvoices = invoices.filter(inv => inv.status === InvoiceStatus.Vencido);
+      const overdueSummary = overdueInvoices.length > 0
+        ? overdueInvoices.map(inv => `${inv.clientName} (R$ ${inv.amount.toFixed(2)})`).join(', ')
+        : 'nenhuma';
+
+      const invoiceContext = `
+        Here is a summary of the user's current invoices for context:
+        - Total invoices: ${invoices.length}
+        - Client names: ${clientNames}.
+        - Pending invoices (${pendingInvoices.length}): ${pendingSummary}.
+        - Overdue invoices (${overdueInvoices.length}): ${overdueSummary}.
+        - Total amount billed: R$ ${invoices.reduce((sum, inv) => sum + inv.amount, 0).toFixed(2)}
+      `.trim().replace(/ +/g, ' '); // Clean up whitespace
+
+      const contextualInput = `${invoiceContext}\n\n---\n\nUser question: "${input}"`;
+
+      const responseStream = await chatRef.current.sendMessageStream({ message: contextualInput });
+      
       setMessages(prev => [...prev, { role: 'model', text: '' }]);
 
       for await (const chunk of responseStream) {
         setMessages(prev => {
           const lastMessage = prev[prev.length - 1];
-          // FIX: Added a check for `lastMessage` to prevent potential runtime errors.
           if (lastMessage && lastMessage.role === 'model') {
             const updatedMessages = [...prev];
             updatedMessages[prev.length - 1] = { ...lastMessage, text: lastMessage.text + chunk.text };

@@ -14,7 +14,7 @@ import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
 import ChatbotPage from './components/ChatbotPage';
 import ChatbotPopup from './components/ChatbotPopup';
-import { Invoice, Page } from './types';
+import { Invoice, Page, Message } from './types';
 import { LanguageProvider } from './context/LanguageContext';
 import { useInvoicesRealtime } from './hooks/useInvoicesRealtime';
 import { createInvoiceSupabase, updateInvoiceSupabase, deleteInvoiceSupabase, generateUUID } from './services/supabaseService';
@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
   
   const { invoices, setInvoices } = useInvoicesRealtime();
+  const [chatbotMessages, setChatbotMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -139,7 +140,7 @@ const App: React.FC = () => {
       case 'about':
         return <About />;
       case 'chatbot':
-        return <ChatbotPage />;
+        return <ChatbotPage invoices={invoices} messages={chatbotMessages} setMessages={setChatbotMessages} />;
       default:
         return <Dashboard invoices={invoices} />;
     }
@@ -185,7 +186,7 @@ const App: React.FC = () => {
             onClose={() => setViewingInvoice(null)}
           />
         )}
-        <ChatbotPopup />
+        <ChatbotPopup invoices={invoices} messages={chatbotMessages} setMessages={setChatbotMessages} />
       </div>
     </LanguageProvider>
   );
