@@ -17,7 +17,7 @@ import ChatbotPopup from './components/ChatbotPopup';
 import { Invoice, Page } from './types';
 import { LanguageProvider } from './context/LanguageContext';
 import { useInvoicesRealtime } from './hooks/useInvoicesRealtime';
-import { createInvoiceSupabase, updateInvoiceSupabase, deleteInvoiceSupabase } from './services/supabaseService';
+import { createInvoiceSupabase, updateInvoiceSupabase, deleteInvoiceSupabase, generateUUID } from './services/supabaseService';
 import Login from './components/Login';
 
 
@@ -64,11 +64,22 @@ const App: React.FC = () => {
   };
 
   const addInvoice = async (invoice: Omit<Invoice, 'id'>) => {
+    const newInvoice: Invoice = {
+      id: generateUUID(),
+      ...invoice,
+    };
+
+    const originalInvoices = [...invoices];
+    // Optimistic update
+    setInvoices(prev => [newInvoice, ...prev]);
+    setCurrentPage('dashboard');
+
     try {
-        await createInvoiceSupabase(invoice);
-        setCurrentPage('dashboard');
+        await createInvoiceSupabase(newInvoice);
     } catch (error) {
         console.error("Failed to create invoice:", error);
+        // Rollback
+        setInvoices(originalInvoices);
         alert('Failed to create invoice. Please try again.');
     }
   };

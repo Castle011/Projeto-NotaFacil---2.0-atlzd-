@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Invoice } from '../types';
 
 // Simple UUID v4 generator for broader browser compatibility.
-const generateUUID = () => {
+export const generateUUID = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = (Math.random() * 16) | 0;
         const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -10,7 +10,7 @@ const generateUUID = () => {
     });
 };
 
-export async function createInvoiceSupabase(inv: Omit<Invoice, 'id'>) {
+export async function createInvoiceSupabase(invoice: Invoice) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     const errorMsg = 'User is not authenticated. Cannot create invoice.';
@@ -18,17 +18,16 @@ export async function createInvoiceSupabase(inv: Omit<Invoice, 'id'>) {
     throw new Error(errorMsg);
   }
   
-  const id = generateUUID();
   const { error } = await supabase.from('invoices').insert([
     {
-      id,
+      id: invoice.id,
       user_id: user.id,
-      client_name: inv.clientName,
-      amount: inv.amount,
-      issue_date: inv.issueDate,
-      due_date: inv.dueDate,
-      status: inv.status,
-      observations: inv.observations,
+      client_name: invoice.clientName,
+      amount: invoice.amount,
+      issue_date: invoice.issueDate,
+      due_date: invoice.dueDate,
+      status: invoice.status,
+      observations: invoice.observations,
     },
   ]);
   if (error) {
