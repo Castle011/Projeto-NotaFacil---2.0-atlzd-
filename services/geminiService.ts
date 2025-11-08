@@ -1,21 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 
-// A function to safely get the API key from the environment
-const getApiKey = (): string | undefined => {
-    if (typeof process !== 'undefined' && process.env) {
-        return process.env.API_KEY;
-    }
-    return undefined;
-};
+// Hardcoded API key for browser environment without a build process.
+const apiKey = "AIzaSyA-99JUXLSc2vJ0CnkmMDt2bj6beYuxoBI";
 
-const apiKey = getApiKey();
-
-if (!apiKey) {
-    console.warn("API_KEY environment variable not set. AI features will be disabled.");
-}
-
-// Initialize the GoogleGenAI client only if the API key is available
+// Initialize the GoogleGenAI client. It will be null if no API key is found.
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+if (!ai) {
+    console.warn("API_KEY not found. AI features will be disabled.");
+}
 
 const prompts = {
     pt: (clientName: string, amount: number, service: string) => `Gere uma breve observação profissional para uma nota fiscal em português. Cliente: "${clientName}", Valor: R$ ${amount.toFixed(2)}, Serviço: "${service}". A observação deve ser concisa e formal.`,
@@ -31,6 +24,7 @@ export const generateInvoiceObservation = async (clientName: string, amount: num
     const prompt = prompts[lang](clientName, amount, service);
 
     try {
+        // FIX: Simplified the `contents` parameter for a single text prompt.
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,

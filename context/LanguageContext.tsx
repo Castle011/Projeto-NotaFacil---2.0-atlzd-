@@ -7,7 +7,6 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string) => string;
-  // Fix: Allow formatDate to accept a Date object as well as a string.
   formatDate: (date: string | Date) => string;
 }
 
@@ -36,10 +35,22 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return typeof result === 'string' ? result : key;
   }, [language]);
 
-  // Fix: Update formatDate to handle both string and Date types. This resolves the error in CalendarPage.tsx.
   const formatDate = useCallback((date: string | Date): string => {
     const locale = language === 'pt' ? 'pt-BR' : 'en-US';
-    return new Date(date).toLocaleDateString(locale);
+    
+    let dateObj: Date;
+
+    // The core issue is that `new Date('YYYY-MM-DD')` is parsed as UTC midnight.
+    // To ensure it's treated as a local date, we parse it manually.
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [year, month, day] = date.split('-').map(Number);
+        dateObj = new Date(year, month - 1, day);
+    } else {
+        // Handles Date objects and other string formats (e.g., ISO with time)
+        dateObj = new Date(date);
+    }
+    
+    return dateObj.toLocaleDateString(locale);
   }, [language]);
 
   const value = useMemo(() => ({ language, setLanguage, t, formatDate }), [language, t, formatDate]);

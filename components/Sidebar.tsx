@@ -12,12 +12,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen }) => {
   const { t } = useTranslations();
 
-  // Fix: Replaced JSX.Element with React.ReactElement to resolve the TypeScript namespace error.
-  const navItems: { id: Page; label: string; icon: React.ReactElement }[] = [
+  // FIX: Explicitly type `navItems` to ensure `item.id` is of type `Page`.
+  // FIX: Changed JSX.Element to React.ReactNode to resolve namespace issue.
+  const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: t('sidebar.dashboard'), icon: <DashboardIcon /> },
     { id: 'profile', label: t('sidebar.profile'), icon: <ProfileIcon /> },
     { id: 'create-invoice', label: t('sidebar.createInvoice'), icon: <CreateInvoiceIcon /> },
     { id: 'invoices', label: t('sidebar.invoices'), icon: <InvoicesIcon /> },
+    { id: 'chatbot', label: t('sidebar.chatbot'), icon: <ChatbotIcon /> },
     { id: 'calendar', label: t('sidebar.calendar'), icon: <CalendarIcon /> },
     { id: 'settings', label: t('sidebar.settings'), icon: <SettingsIcon /> },
     { id: 'about', label: t('sidebar.about'), icon: <AboutIcon /> },
@@ -83,6 +85,11 @@ const CreateInvoiceIcon = () => (
 const InvoicesIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+);
+const ChatbotIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.902L3 21l1.402-4.256A9.863 9.863 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
     </svg>
 );
 const CalendarIcon = () => (

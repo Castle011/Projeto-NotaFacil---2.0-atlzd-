@@ -14,4 +14,4 @@ export interface Invoice {
   observations: string;
 }
 
-export type Page = 'dashboard' | 'profile' | 'create-invoice' | 'invoices' | 'about' | 'calendar' | 'settings';
+export type Page = 'dashboard' | 'profile' | 'create-invoice' | 'invoices' | 'about' | 'calendar' | 'settings' | 'chatbot';

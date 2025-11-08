@@ -18,6 +18,12 @@ const statusBadgeClasses = {
   [InvoiceStatus.Vencido]: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300',
 };
 
+// Helper function to parse date string as local date to avoid timezone issues.
+const parseDateAsLocal = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
 const CalendarPage: React.FC<CalendarPageProps> = ({ invoices }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -31,7 +37,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ invoices }) => {
   const invoicesByDueDate = useMemo(() => {
     const map = new Map<string, Invoice[]>();
     invoices.forEach(invoice => {
-      const dateKey = new Date(invoice.dueDate).toDateString();
+      const dateKey = parseDateAsLocal(invoice.dueDate).toDateString();
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }

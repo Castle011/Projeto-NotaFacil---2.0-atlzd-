@@ -8,6 +8,7 @@ export const translations: Record<string, any> = {
       calendar: 'Calendário',
       settings: 'Configurações',
       about: 'Sobre',
+      chatbot: 'Chatbot',
     },
     header: {
       admin: 'Admin',
@@ -27,7 +28,7 @@ export const translations: Record<string, any> = {
         toggleToRegister: 'Não tem uma conta? Registre-se',
         passwordMismatch: 'As senhas não coincidem!',
         invalidCredentials: 'Email ou senha inválidos.',
-        registerSuccess: 'Cadastro realizado com sucesso! Por favor, faça o login.',
+        registerSuccessCheckEmail: 'Cadastro realizado! Por favor, verifique seu email para confirmar sua conta.',
     },
     dashboard: {
       title: 'Dashboard',
@@ -151,6 +152,14 @@ export const translations: Record<string, any> = {
         activityItem2: 'Status da nota NF-001 atualizado para Pago.',
         activityItem3: 'Nota NF-003 marcada como Vencida.',
     },
+    chatbot: {
+      pageTitle: 'Assistente de IA',
+      popupTitle: 'Assistente NotaFácil',
+      welcomeMessage: 'Olá! Sou o assistente do NotaFácil. Como posso te ajudar hoje?',
+      inputPlaceholder: 'Digite sua mensagem...',
+      errorMessage: 'Desculpe, ocorreu um erro. Tente novamente mais tarde.',
+      apiKeyMissing: 'A chave da API não está configurada. O chatbot está desativado.',
+    },
     common: {
       client: 'Cliente',
       amount: 'Valor',
@@ -176,6 +185,7 @@ export const translations: Record<string, any> = {
       calendar: 'Calendar',
       settings: 'Settings',
       about: 'About',
+      chatbot: 'Chatbot',
     },
     header: {
       admin: 'Admin',
@@ -195,7 +205,7 @@ export const translations: Record<string, any> = {
         toggleToRegister: "Don't have an account? Register",
         passwordMismatch: "Passwords don't match!",
         invalidCredentials: 'Invalid email or password.',
-        registerSuccess: 'Registration successful! Please log in.',
+        registerSuccessCheckEmail: 'Registration successful! Please check your email to confirm your account.',
     },
     dashboard: {
       title: 'Dashboard',
@@ -318,6 +328,14 @@ export const translations: Record<string, any> = {
         activityItem1: 'Created invoice NF-006 for Legal Advisors Assoc.',
         activityItem2: 'Updated status of invoice NF-001 to Paid.',
         activityItem3: 'Invoice NF-003 marked as Overdue.',
+    },
+    chatbot: {
+      pageTitle: 'AI Assistant',
+      popupTitle: 'NotaFácil Assistant',
+      welcomeMessage: 'Hello! I am the NotaFácil assistant. How can I help you today?',
+      inputPlaceholder: 'Type your message...',
+      errorMessage: 'Sorry, an error occurred. Please try again later.',
+      apiKeyMissing: 'API Key is not configured. Chatbot is disabled.',
     },
     common: {
       client: 'Client',

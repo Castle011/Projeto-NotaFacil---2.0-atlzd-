@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import Login from './components/Login';
+import React, { useState, useEffect } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from './lib/supabaseClient';
 import Dashboard from './components/Dashboard';
 import CreateInvoice from './components/CreateInvoice';
 import About from './components/About';
@@ -11,65 +12,106 @@ import InvoiceDetailsModal from './components/InvoiceDetailsModal';
 import CalendarPage from './components/CalendarPage';
 import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
-import { Invoice, InvoiceStatus, Page } from './types';
+import ChatbotPage from './components/ChatbotPage';
+import ChatbotPopup from './components/ChatbotPopup';
+import { Invoice, Page } from './types';
 import { LanguageProvider } from './context/LanguageContext';
+import { useInvoicesRealtime } from './hooks/useInvoicesRealtime';
+import { createInvoiceSupabase, updateInvoiceSupabase, deleteInvoiceSupabase } from './services/supabaseService';
+import Login from './components/Login';
+
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
   
+  const { invoices, setInvoices } = useInvoicesRealtime();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+    });
+
+    const {
+        data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme]);
   
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: 'NF-001', clientName: 'Tech Solutions Inc.', amount: 2500, issueDate: '2023-10-15', dueDate: '2023-11-14', status: InvoiceStatus.Pago, observations: 'Serviços de consultoria em TI.' },
-    { id: 'NF-002', clientName: 'Creative Minds Agency', amount: 1800, issueDate: '2023-10-20', dueDate: '2023-11-19', status: InvoiceStatus.Pendente, observations: 'Design de logotipo e material de marca.' },
-    { id: 'NF-003', clientName: 'Global Exports Ltda.', amount: 5200, issueDate: '2023-09-05', dueDate: '2023-10-05', status: InvoiceStatus.Vencido, observations: 'Frete internacional.' },
-    { id: 'NF-004', clientName: 'Padaria Pão Quente', amount: 350, issueDate: '2023-11-01', dueDate: '2023-12-01', status: InvoiceStatus.Pendente, observations: 'Fornecimento mensal de farinha.' },
-    { id: 'NF-005', clientName: 'Tech Solutions Inc.', amount: 3100, issueDate: '2023-11-05', dueDate: '2023-12-05', status: InvoiceStatus.Pendente, observations: 'Desenvolvimento de módulo de e-commerce.' },
-    { id: 'NF-006', clientName: 'Legal Advisors Assoc.', amount: 4500, issueDate: '2023-10-10', dueDate: '2023-11-09', status: InvoiceStatus.Pago, observations: 'Assessoria jurídica contratual.' },
-  ]);
-
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
 
-  const handleLogin = () => setIsLoggedIn(true);
-  const handleLogout = () => setIsLoggedIn(false);
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Error logging out:', error);
+  };
   
   const handleSetCurrentPage = (page: Page) => {
     setCurrentPage(page);
     setIsSidebarOpen(false); // Close sidebar on navigation
   };
 
-  const addInvoice = (invoice: Omit<Invoice, 'id'>) => {
-    const newId = `NF-${String(invoices.length + 1).padStart(3, '0')}`;
-    setInvoices(prev => [{...invoice, id: newId}, ...prev]);
-    setCurrentPage('dashboard');
-  };
-  
-  const updateInvoice = (updatedInvoice: Invoice) => {
-    setInvoices(prev => prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv));
-    setEditingInvoice(null);
-  };
-
-  const deleteInvoice = (invoiceId: string) => {
-    // Note: In a real app, you'd get the confirmation text from the translations.
-    if (window.confirm('Tem certeza que deseja excluir esta nota fiscal? Esta ação não pode ser desfeita.')) {
-      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+  const addInvoice = async (invoice: Omit<Invoice, 'id'>) => {
+    try {
+        await createInvoiceSupabase(invoice);
+        setCurrentPage('dashboard');
+    } catch (error) {
+        console.error("Failed to create invoice:", error);
+        alert('Failed to create invoice. Please try again.');
     }
   };
+  
+  const updateInvoice = async (updatedInvoice: Invoice) => {
+    const originalInvoices = [...invoices];
+    // Optimistic update
+    setInvoices(prev => prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv));
+    setEditingInvoice(null);
+    try {
+        await updateInvoiceSupabase(updatedInvoice);
+    } catch (error) {
+        console.error("Failed to update invoice:", error);
+        // Rollback
+        setInvoices(originalInvoices);
+        alert('Failed to update invoice. Please try again.');
+    }
+  };
+
+  const deleteInvoice = async (invoiceId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir esta nota fiscal? Esta ação não pode ser desfeita.')) {
+        const originalInvoices = [...invoices];
+        // Optimistic update
+        setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+        try {
+            await deleteInvoiceSupabase(invoiceId);
+        } catch (error) {
+            console.error("Failed to delete invoice:", error);
+            setInvoices(originalInvoices);
+            alert('Failed to delete invoice. Please try again.');
+        }
+    }
+  };
+
+  const userName = session?.user?.user_metadata?.full_name || session?.user?.email || "Usuário";
+  const userEmail = session?.user?.email;
 
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard invoices={invoices} />;
       case 'profile':
-        return <ProfilePage userName={userName} invoices={invoices} />;
+        return <ProfilePage userName={userName} userEmail={userEmail} invoices={invoices} />;
       case 'create-invoice':
         return <CreateInvoice addInvoice={addInvoice} />;
       case 'invoices':
@@ -85,17 +127,17 @@ const App: React.FC = () => {
         return <SettingsPage theme={theme} setTheme={setTheme} />;
       case 'about':
         return <About />;
+      case 'chatbot':
+        return <ChatbotPage />;
       default:
         return <Dashboard invoices={invoices} />;
     }
   };
   
-  const userName = useMemo(() => "Usuário Admin", []);
-
-  if (!isLoggedIn) {
+  if (!session) {
     return (
       <LanguageProvider>
-        <Login onLogin={handleLogin} />
+        <Login />
       </LanguageProvider>
     );
   }
@@ -132,6 +174,7 @@ const App: React.FC = () => {
             onClose={() => setViewingInvoice(null)}
           />
         )}
+        <ChatbotPopup />
       </div>
     </LanguageProvider>
   );

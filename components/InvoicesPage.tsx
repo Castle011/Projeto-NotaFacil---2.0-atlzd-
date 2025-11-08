@@ -17,6 +17,12 @@ const statusClasses = {
 
 type SortByType = 'dateDesc' | 'dateAsc' | 'clientAZ' | 'clientZA' | 'amountDesc' | 'amountAsc' | 'idAsc' | 'idDesc';
 
+// Helper function to parse date string as local date to avoid timezone issues.
+const parseDateAsLocal = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
 const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onEdit, onDelete, onViewDetails }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | InvoiceStatus>('all');
@@ -36,7 +42,7 @@ const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onEdit, onDelete,
 
         switch (sortBy) {
             case 'dateAsc':
-                processed.sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+                processed.sort((a, b) => parseDateAsLocal(a.issueDate).getTime() - parseDateAsLocal(b.issueDate).getTime());
                 break;
             case 'clientAZ':
                 processed.sort((a, b) => a.clientName.localeCompare(b.clientName));
@@ -58,7 +64,7 @@ const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onEdit, onDelete,
                 break;
             case 'dateDesc':
             default:
-                processed.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
+                processed.sort((a, b) => parseDateAsLocal(b.issueDate).getTime() - parseDateAsLocal(a.issueDate).getTime());
                 break;
         }
 

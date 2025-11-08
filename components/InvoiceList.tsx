@@ -10,6 +10,12 @@ interface InvoiceListProps {
 type FilterType = 'all' | InvoiceStatus;
 type SortType = 'recent' | 'highest' | 'lowest';
 
+// Helper function to parse date string as local date to avoid timezone issues.
+const parseDateAsLocal = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
 const InvoiceList: React.FC<InvoiceListProps> = ({ invoices }) => {
   const [filter, setFilter] = useState<FilterType>('all');
   const [sortBy, setSortBy] = useState<SortType>('recent');
@@ -30,7 +36,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices }) => {
         break;
       case 'recent':
       default:
-        sorted.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
+        sorted.sort((a, b) => parseDateAsLocal(b.issueDate).getTime() - parseDateAsLocal(a.issueDate).getTime());
         break;
     }
     return sorted;

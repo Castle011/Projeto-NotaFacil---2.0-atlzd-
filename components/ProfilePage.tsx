@@ -4,10 +4,11 @@ import { useTranslations } from '../context/LanguageContext';
 
 interface ProfilePageProps {
   userName: string;
+  userEmail?: string;
   invoices: Invoice[];
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ userName, invoices }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ userName, userEmail, invoices }) => {
     const { t } = useTranslations();
 
     const stats = useMemo(() => {
@@ -24,10 +25,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userName, invoices }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Profile Card */}
-                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm flex flex-col items-center">
+                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm flex flex-col items-center text-center">
                     <img className="h-32 w-32 rounded-full object-cover mb-4 ring-4 ring-indigo-200 dark:ring-indigo-700" src="https://picsum.photos/100" alt="User avatar" />
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{userName}</h3>
-                    <p className="text-slate-500 dark:text-slate-400">admin@notafacil.com</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white truncate w-full">{userName}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 truncate w-full">{userEmail}</p>
                     <button className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {t('profilePage.editProfile')}
                     </button>

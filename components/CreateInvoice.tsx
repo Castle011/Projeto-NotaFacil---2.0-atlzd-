@@ -4,7 +4,7 @@ import { generateInvoiceObservation } from '../services/geminiService';
 import { useTranslations } from '../context/LanguageContext';
 
 interface CreateInvoiceProps {
-  addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
+  addInvoice: (invoice: Omit<Invoice, 'id'>) => Promise<void>;
 }
 
 const CreateInvoice: React.FC<CreateInvoiceProps> = ({ addInvoice }) => {
@@ -17,17 +17,26 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ addInvoice }) => {
   const [observations, setObservations] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // FIX: To avoid timezone issues where a 'YYYY-MM-DD' string is interpreted as UTC midnight,
+    // parse the string manually to create a Date object in the local timezone at midnight.
+    const [year, month, day] = dueDate.split('-').map(Number);
+    const dueDateObj = new Date(year, month - 1, day);
+
     const newInvoice: Omit<Invoice, 'id'> = {
       clientName,
       amount: parseFloat(amount),
       issueDate,
       dueDate,
-      status: new Date(dueDate) < new Date() ? InvoiceStatus.Vencido : InvoiceStatus.Pendente,
+      status: dueDateObj < today ? InvoiceStatus.Vencido : InvoiceStatus.Pendente,
       observations,
     };
-    addInvoice(newInvoice);
+    await addInvoice(newInvoice);
   };
   
   const handleGenerateObservation = async () => {
